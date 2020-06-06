@@ -89,6 +89,10 @@ export class Device extends EventEmitter {
     }
 
     this.serialPort.on('open', (open) => {
+      this.emit('adapter', {
+        event: 'Open',
+        value: { port: this.port.path },
+      });
       debug('open callback');
     });
     this.serialPort.on('data', (data) => {
@@ -97,15 +101,18 @@ export class Device extends EventEmitter {
     });
     this.serialPort.on('error', (error) => {
       debug('error callback');
+      this.emit('adapter', {
+        event: 'Error',
+        value: { port: this.port.path, error: error },
+      });
       this.error(error);
     });
-    this.serialPort.on('close', (close) => {
+    this.serialPort.on('close', () => {
       debug('close callback');
-    });
-
-    this.emit('adapter', {
-      event: 'Open',
-      value: {},
+      this.emit('adapter', {
+        event: 'Close',
+        value: { port: this.port.path },
+      });
     });
   }
 

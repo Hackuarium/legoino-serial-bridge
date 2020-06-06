@@ -62,10 +62,10 @@ export default class SerialBridge extends EventEmitter {
   }
 
   async continuousUpdateDevices(options = {}) {
-    const { repeatInterval = 1000 } = options;
+    const { scanInterval = 1000 } = options;
     while (true) {
       this.updateDevices();
-      await delay(repeatInterval);
+      await delay(scanInterval);
     }
   }
 

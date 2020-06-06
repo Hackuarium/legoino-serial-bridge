@@ -88,12 +88,12 @@ export class Device extends EventEmitter {
       );
     }
 
-    this.serialPort.on('open', (open) => {
+    this.serialPort.on('open', () => {
+      debug('open callback');
       this.emit('adapter', {
         event: 'Open',
         value: { port: this.port.path },
       });
-      debug('open callback');
     });
     this.serialPort.on('data', (data) => {
       debug('data callback');

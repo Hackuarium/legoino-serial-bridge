@@ -25,7 +25,7 @@ export class Device extends EventEmitter {
     this.serialPort = undefined;
     this.queue = [];
     this.action = undefined;
-    this.interCommandDelay = 100;
+    this.interCommandDelay = options.interCommandDelay;
     this.defaultCommandExpirationDelay = 2000;
   }
 
@@ -88,10 +88,8 @@ export class Device extends EventEmitter {
       );
     }
 
-    await delay(100);
     this.serialPort.on('open', (open) => {
       debug('open callback');
-      this.open(open);
     });
     this.serialPort.on('data', (data) => {
       debug('data callback');
@@ -99,11 +97,10 @@ export class Device extends EventEmitter {
     });
     this.serialPort.on('error', (error) => {
       debug('error callback');
-      this.open(error);
+      this.error(error);
     });
     this.serialPort.on('close', (close) => {
       debug('close callback');
-      this.open(close);
     });
 
     this.emit('adapter', {

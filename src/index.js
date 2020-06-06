@@ -5,7 +5,7 @@ import Debug from 'debug';
 import delay from 'delay';
 import SerialPort from 'serialport';
 
-import { Device, STATUS_MISSING, STATUS_OPENED } from './Device';
+import { Device, STATUS_MISSING, STATUS_OPENED, STATUS_CLOSED } from './Device';
 
 const debug = new Debug('SerialBridge:SerialBridge');
 
@@ -22,6 +22,8 @@ export default class SerialBridge extends EventEmitter {
         ? (port) => port.manufacturer === 'SparkFun' && port.productId
         : options.portFilter;
     this.baudRate = options.baudRate || 57200;
+    this.interCommandDelay =
+      options.interCommandDelay === undefined ? 100 : options.interCommandDelay;
   }
 
   async updateDevices() {
@@ -34,6 +36,12 @@ export default class SerialBridge extends EventEmitter {
       (portName) => !portsName.includes(portName),
     );
     missingDevicesPortName.forEach((portName) => {
+      if (
+        this.devices[portName].status !== STATUS_MISSING &&
+        this.devices[portName].status !== STATUS_CLOSED
+      ) {
+        this.devices[portName].close();
+      }
       this.devices[portName].status = STATUS_MISSING;
     });
 
@@ -42,7 +50,10 @@ export default class SerialBridge extends EventEmitter {
       if (device) {
         await device.ensureOpen();
       } else {
-        let newDevice = new Device(port, { baudRate: this.baudRate });
+        let newDevice = new Device(port, {
+          baudRate: this.baudRate,
+          interCommandDelay: this.interCommandDelay,
+        });
         this.devices[port.path] = newDevice;
         await newDevice.open();
       }

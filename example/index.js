@@ -8,6 +8,7 @@ export async function example() {
   const serialBridge = new SerialBridge({
     portFilter: (port) => port.manufacturer === 'SparkFun' && port.productId,
     baudRate: 9600,
+    interCommandDelay: 1,
   });
 
   // we will update the list of matching serial devices every 1s
@@ -15,7 +16,7 @@ export async function example() {
 
   // just a small demo. We fetch the free memory of all the connected devices
   while (true) {
-    await delay(1000);
+    await delay(1);
     const devices = serialBridge.getDevicesList({ ready: true });
     devices.forEach((device) => {
       console.log(`${device.port.path} - ${device.id} - ${device.status}`);

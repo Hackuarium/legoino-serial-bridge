@@ -14,9 +14,7 @@
     "prepublishOnly": "rollup -c",
     "start": "nodemon --inspect -r esm example",
     "start-debug": "DEBUG=SerialBridge:* nodemon -r esm example",
-    "test": "npm run test-coverage && npm run eslint",
-    "test-coverage": "jest --coverage",
-    "test-only": "jest"
+    "test": "npm run eslint"
   },
   "repository": {
     "type": "git",

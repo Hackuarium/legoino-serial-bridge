@@ -1,26 +1,98 @@
-import PortManager from './PortManager';
-import delay from 'delay';
+/* eslint-disable no-await-in-loop */
+import EventEmitter from 'events';
+
 import Debug from 'debug';
+import delay from 'delay';
+import SerialPort from 'serialport';
 
-const debug = new Debug('SerialBridge:Home');
+import { Device, STATUS_MISSING, STATUS_OPENED } from './Device';
 
-export async function SerialBridge() {
-  const portManager = new PortManager();
-  portManager.continuousUpdateDevices();
+const debug = new Debug('SerialBridge:SerialBridge');
 
-  while (true) {
-    await delay(1000);
-    const devices = portManager.getDevicesList();
-    devices.forEach((device) => {
-      debug(device.port.path + ' - ' + device.id + ' - ' + device.status);
+/**
+ * Manage Serial Ports
+ */
+
+export default class SerialBridge extends EventEmitter {
+  constructor(options = {}) {
+    super();
+    this.devices = {};
+    this.portFilter =
+      options.portFilter === undefined
+        ? (port) => port.manufacturer === 'SparkFun' && port.productId
+        : options.portFilter;
+    this.baudRate = options.baudRate || 57200;
+  }
+
+  async updateDevices() {
+    const ports = await SerialPort.list();
+    const portsName = ports.map((port) => port.path);
+    const filteredPorts = ports.filter(this.portFilter);
+    debug('updateDevices');
+
+    const missingDevicesPortName = Object.keys(this.devices).filter(
+      (portName) => !portsName.includes(portName),
+    );
+    missingDevicesPortName.forEach((portName) => {
+      this.devices[portName].status = STATUS_MISSING;
     });
-    try {
-      let result = await portManager.sendCommand('21569', 'il');
-      console.log(result);
-    } catch (e) {
-      console.log(e);
+
+    for (let port of filteredPorts) {
+      let device = this.devices[port.path];
+      if (device) {
+        await device.ensureOpen();
+      } else {
+        let newDevice = new Device(port, { baudRate: this.baudRate });
+        this.devices[port.path] = newDevice;
+        await newDevice.open();
+      }
+    }
+    // check if there are any new ports
+  }
+
+  async continuousUpdateDevices(options = {}) {
+    const { repeatInterval = 1000 } = options;
+    while (true) {
+      this.updateDevices();
+      await delay(repeatInterval);
     }
   }
-}
 
-SerialBridge();
+  getDevicesList(options = {}) {
+    let { ready } = options;
+    let devices = [];
+    for (let port in this.devices) {
+      let device = this.devices[port];
+      if (!ready || device.isReady()) {
+        devices.push({
+          status: device.status,
+          port: device.port,
+          id: device.id,
+          queueLength: device.queue.length,
+        });
+      }
+    }
+    return devices;
+  }
+
+  findDevice(id) {
+    if (id === undefined) return undefined;
+    let devices = Object.keys(this.devices)
+      .map((key) => this.devices[key])
+      .filter((device) => device.id === id && device.status === STATUS_OPENED);
+    if (devices.length === 0) return undefined;
+    if (devices.length > 1) {
+      throw new Error(`More than one device has the same id: ${id}`);
+    }
+    return devices[0];
+  }
+
+  async sendCommand(id, command) {
+    const device = this.findDevice(id);
+    if (!device) {
+      throw Error(`Device ${id} not found`);
+    }
+    if (device && device.isReady()) return device.get(command);
+    throw Error(`Device ${id} not ready: ${device.port.path}`);
+  }
+}

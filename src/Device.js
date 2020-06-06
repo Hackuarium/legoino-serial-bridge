@@ -1,9 +1,10 @@
+/* eslint-disable no-await-in-loop */
 import EventEmitter from 'events';
 
 import Debug from 'debug';
 import delay from 'delay';
 import SerialPort from 'serialport';
-import { resolve } from 'dns';
+
 import { Action } from './Action';
 
 const debug = new Debug('SerialBridge:Device');
@@ -43,7 +44,8 @@ export class Device extends EventEmitter {
     while (this.queue.length > 0) {
       this.action = this.queue.shift();
       if (this.action) {
-        this.serialPort.write(this.action.command + '\n');
+        this.action.start();
+        this.serialPort.write(`${this.action.command}\n`);
         await this.action.finishedPromise;
         this.action = undefined;
         debug('Finished');
@@ -114,7 +116,6 @@ export class Device extends EventEmitter {
    We need to add this command in the queue and wait it resolves or rejects
   */
   async get(command, options = {}) {
-    console.log(command);
     const {
       commandExpirationDelay = this.defaultCommandExpirationDelay,
     } = options;

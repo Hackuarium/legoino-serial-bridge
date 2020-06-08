@@ -11,16 +11,13 @@ const debug = new Debug('SerialBridge:SerialBridge');
 
 /**
  * Class creating a new serial bridge to manage serial ports.
+ * @param {object} [options={}]
+ * @param {function} [options.portFilter=(port) => port.manufacturer === 'SparkFun' && port.productId] Filter the serial ports to address.
+ * @param {number} [options.baudRate=57200] Baud rate
+ * @param {number} [options.interCommandDelay=100] Time to wait between commands in [ms]
+ * @param {number} [options.defaultCommandExpirationDelay=100] Time to wait for answer before timeout
  */
 export default class SerialBridge extends EventEmitter {
-  /**
-   * Create the serial bridge.
-   * @param {object} [options={}]
-   * @param {function} [options.portFilter=(port) => port.manufacturer === 'SparkFun' && port.productId] Filter the serial ports to address.
-   * @param {number} [options.baudRate=57200] Baud rate
-   * @param {number} [options.interCommandDelay=100] Time to wait between commands in [ms]
-   * @param {number} [options.defaultCommandExpirationDelay=100] Time to wait for answer before timeout
-   */
   constructor(options = {}) {
     super();
     this.devices = {};

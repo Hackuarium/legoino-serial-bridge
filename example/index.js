@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import delay from 'delay';
 
 import SerialBridge from '../src';
@@ -5,8 +6,9 @@ import SerialBridge from '../src';
 export async function example() {
   const serialBridge = new SerialBridge({
     portFilter: (port) => port.manufacturer === 'SparkFun' && port.productId,
-    baudRate: 9600,
+    baudRate: 57200,
     interCommandDelay: 100,
+    defaultCommandExpirationDelay: 2000,
   });
 
   // we will update the list of matching serial devices every 1s

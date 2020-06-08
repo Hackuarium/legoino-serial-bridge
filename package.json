@@ -1,7 +1,7 @@
 {
   "name": "legoino-serial-bridge",
   "version": "0.1.0",
-  "description": "",
+  "description": "Create a serial bridge to interact with serial devices.",
   "main": "lib/index.js",
   "module": "src/index.js",
   "files": [

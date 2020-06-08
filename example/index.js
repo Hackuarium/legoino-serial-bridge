@@ -4,6 +4,7 @@ import delay from 'delay';
 import SerialBridge from '../src';
 
 export async function example() {
+  // Creating a new instance of the serial bridge
   const serialBridge = new SerialBridge({
     portFilter: (port) => port.manufacturer === 'SparkFun' && port.productId,
     baudRate: 57200,
@@ -11,7 +12,7 @@ export async function example() {
     defaultCommandExpirationDelay: 2000,
   });
 
-  // we will update the list of matching serial devices every 1s
+  // we will update the list of serial devices matching `portFilter` every 1s
   serialBridge.continuousUpdateDevices({ scanInterval: 1000 });
 
   // just a small demo. We fetch the free memory of all the connected devices

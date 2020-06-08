@@ -10,10 +10,17 @@ import { Device, STATUS_MISSING, STATUS_OPENED, STATUS_CLOSED } from './Device';
 const debug = new Debug('SerialBridge:SerialBridge');
 
 /**
- * Manage Serial Ports
+ * Class creating a new serial bridge to manage serial ports.
  */
-
 export default class SerialBridge extends EventEmitter {
+  /**
+   * Create the serial bridge.
+   * @param {object} [options={}]
+   * @param {function} [options.portFilter=(port) => port.manufacturer === 'SparkFun' && port.productId] Filter the serial ports to address.
+   * @param {number} [options.baudRate=57200] Baud rate
+   * @param {number} [options.interCommandDelay=100] Time to wait between commands in [ms]
+   * @param {number} [options.defaultCommandExpirationDelay=100] Time to wait for answer before timeout
+   */
   constructor(options = {}) {
     super();
     this.devices = {};
@@ -30,6 +37,9 @@ export default class SerialBridge extends EventEmitter {
         : options.defaultCommandExpirationDelay;
   }
 
+  /**
+   * Update this.devices
+   */
   async updateDevices() {
     const ports = await SerialPort.list();
     const portsName = ports.map((port) => port.path);
@@ -66,6 +76,11 @@ export default class SerialBridge extends EventEmitter {
     // check if there are any new ports
   }
 
+  /**
+   * Update this.devices every `scanInterval` [ms].
+   * @param {object} [options={}]
+   * @param {number} [options.scanInterval=1000] Delay between `updateDevices()` calls
+   */
   async continuousUpdateDevices(options = {}) {
     const { scanInterval = 1000 } = options;
     while (true) {
@@ -74,8 +89,14 @@ export default class SerialBridge extends EventEmitter {
     }
   }
 
+  /**
+   * Returns this.devices
+   * @param {object} [options={}]
+   * @param {bool} [options.ready=false] If `true` returns only currently connected device. If `false` returns all devices ever connected.
+   * @returns {Array<object>}
+   */
   getDevicesList(options = {}) {
-    let { ready } = options;
+    let { ready = false } = options;
     let devices = [];
     for (let port in this.devices) {
       let device = this.devices[port];
@@ -91,6 +112,7 @@ export default class SerialBridge extends EventEmitter {
     return devices;
   }
 
+  // private function
   findDevice(id) {
     if (id === undefined) return undefined;
     let devices = Object.keys(this.devices)
@@ -103,6 +125,11 @@ export default class SerialBridge extends EventEmitter {
     return devices[0];
   }
 
+  /**
+   * Send a serial command to a device.
+   * @param {number} id ID of the device
+   * @param {string} command Command to send
+   */
   async sendCommand(id, command) {
     const device = this.findDevice(id);
     if (!device) {

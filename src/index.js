@@ -24,6 +24,10 @@ export default class SerialBridge extends EventEmitter {
     this.baudRate = options.baudRate || 57200;
     this.interCommandDelay =
       options.interCommandDelay === undefined ? 100 : options.interCommandDelay;
+    this.defaultCommandExpirationDelay =
+      options.defaultCommandExpirationDelay === undefined
+        ? 100
+        : options.defaultCommandExpirationDelay;
   }
 
   async updateDevices() {
@@ -53,6 +57,7 @@ export default class SerialBridge extends EventEmitter {
         let newDevice = new Device(port, {
           baudRate: this.baudRate,
           interCommandDelay: this.interCommandDelay,
+          defaultCommandExpirationDelay: this.defaultCommandExpirationDelay,
         });
         this.devices[port.path] = newDevice;
         await newDevice.open();
@@ -93,7 +98,7 @@ export default class SerialBridge extends EventEmitter {
       .filter((device) => device.id === id && device.status === STATUS_OPENED);
     if (devices.length === 0) return undefined;
     if (devices.length > 1) {
-      throw new Error(`More than one device has the same id: ${id}`);
+      throw new Error(`Many devices have the same id: ${id}`);
     }
     return devices[0];
   }

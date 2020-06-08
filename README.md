@@ -40,6 +40,7 @@ export async function example() {
       console.log(`${device.port.path} - ${device.id} - ${device.status}`);
     });
     for (let device of devices) {
+      // you should use this syntax whenever sending a command!
       await serialBridge
         .sendCommand(device.id, 'uf')
         .then((result) => {
